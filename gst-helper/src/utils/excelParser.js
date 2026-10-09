@@ -1,12 +1,21 @@
-import * as XLSX from 'xlsx';
-
 export async function parseExcelFile(file) {
+  const XLSX = await import('xlsx');
   const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: 'array' });
+  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-  return rows;
+  return rows.map(row => Object.fromEntries(Object.entries(row).map(
+    ([key, value]) => [key.trim(), value]
+  )));
+}
+
+export function detectFilingPeriod(rows) {
+  const periods = new Set((rows || []).map(r =>
+    `${Number(r.month_number)}|${Number(r.financial_year)}`));
+  if (periods.size !== 1) return null;
+  const [month, year] = [...periods][0].split('|').map(Number);
+  return month >= 1 && month <= 12 && year >= 2000 ? { month, year } : null;
 }
 
 export function detectFileByColumns(rows) {

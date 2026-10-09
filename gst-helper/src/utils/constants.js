@@ -57,6 +57,8 @@ function normalize(s) {
 
 export function getPOS(stateName) {
   const norm = normalize(stateName);
+  if (!norm) return null;
+  if (norm.includes('DAMAN') && norm.includes('DIU')) return '26';
   if (STATE_TO_POS[norm]) return STATE_TO_POS[norm];
   for (const k of Object.keys(STATE_TO_POS)) {
     if (norm.includes(k) || k.includes(norm)) return STATE_TO_POS[k];
@@ -70,14 +72,17 @@ export function toNum(v) {
 }
 
 export function r2(v) {
-  return Math.round(v * 100) / 100;
+  const [coefficient, exponent = '0'] = String(v).split('e');
+  const rounded = Math.round(Number(`${coefficient}e${Number(exponent) + 2}`));
+  const [result, resultExponent = '0'] = String(rounded).split('e');
+  return Number(`${result}e${Number(resultExponent) - 2}`);
 }
 
 export function mapHSN_UQC(hsn_code) {
-  if (hsn_code === '392401') {
-    return { hsn_sc: '392490', uqc: 'PAC' };
+  if (String(hsn_code).trim() === '392401') {
+    return { hsn_sc: '3924', uqc: 'PCS' };
   }
-  return { hsn_sc: hsn_code, uqc: 'PCS' };
+  return { hsn_sc: String(hsn_code).trim(), uqc: 'PCS' };
 }
 
 export function transformETIN(ecoGstin, sellerStateCode) {
