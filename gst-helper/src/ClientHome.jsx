@@ -22,14 +22,13 @@ function readClients() {
   }
 }
 
-export default function ClientHome({ onOpen }) {
+export default function ClientHome({ onOpen, view = 'dashboard', onNavigate }) {
   const [initial] = useState(readClients);
   const [clients, setClients] = useState(initial.clients);
   const [error, setError] = useState(initial.error);
   const [draft, setDraft] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [query, setQuery] = useState('');
-  const [view, setView] = useState('dashboard');
   const [filings, setFilings] = useState([]);
   const [filingStatus, setFilingStatus] = useState('Loading saved months…');
 
@@ -93,7 +92,7 @@ export default function ClientHome({ onOpen }) {
     `${client.tradeName} ${client.partyName} ${client.gstin}`.toLowerCase().includes(query.toLowerCase()));
 
   if (view === 'dashboard') return <Dashboard clients={clients} filings={filings} filingStatus={filingStatus}
-    error={error} onClients={() => setView('clients')} onOpen={onOpen}
+    error={error} onClients={() => onNavigate({ screen: 'clients' })} onOpen={onOpen}
     onToggle={client => persist(clients.map(item => item.id === client.id
       ? { ...item, active: item.active === false } : item))} />;
 
@@ -107,7 +106,7 @@ export default function ClientHome({ onOpen }) {
         <section className="card">
           <div className="client-toolbar">
             <h2>Your clients ({clients.length})</h2>
-            <button className="btn btn-secondary" onClick={() => setView('dashboard')}>Dashboard</button>
+            <button className="btn btn-secondary" onClick={() => onNavigate({ screen: 'dashboard' })}>Dashboard</button>
             <button className="btn btn-primary" onClick={() => {
               setDraft({ ...emptyClient }); setDeleteId(null); setError(initial.error);
             }}>+ Add client</button>

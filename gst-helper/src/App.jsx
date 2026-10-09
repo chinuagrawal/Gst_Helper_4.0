@@ -9,6 +9,8 @@ import {
 import "./App.css";
 import "./theme.css";
 import ThemeToggle from "./ThemeToggle.jsx";
+import useTableKeyboard from "./useTableKeyboard.js";
+import { readRoute, routeHash } from "./utils/navigation.js";
 import ClientHome from "./ClientHome.jsx";
 import { filingKey, restoreFiling, saveFiling } from "./utils/filingStorage.js";
 import { downloadFileName } from "./utils/filingDashboard.js";
@@ -964,10 +966,45 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
 }
 
 export default function App() {
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [period, setPeriod] = useState({ month: new Date().getMonth() + 1, year: getCurrentYear() });
+  useTableKeyboard();
+  const [route, setRoute] = useState(() => readRoute(window.location.hash));
+  useEffect(() => {
+    const syncRoute = () => setRoute(readRoute(window.location.hash));
+    const keyboardBack = event => {
+      if (event.defaultPrevented || event.isComposing || event.repeat ||
+        event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      if (event.key !== 'Escape' && event.key !== 'Backspace') return;
+      const target = event.target;
+      if (target instanceof Element && (target.closest('input, textarea, select, [role="textbox"]') ||
+        target.isContentEditable)) return;
+      event.preventDefault();
+      window.history.back();
+    };
+    if (!window.location.hash) window.history.replaceState(null, '', routeHash({ screen: 'dashboard' }));
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    window.addEventListener('keydown', keyboardBack);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+      window.removeEventListener('keydown', keyboardBack);
+    };
+  }, []);
+  const navigate = next => {
+    const hash = routeHash(next);
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash);
+    setRoute(next);
+  };
+  let selectedClient = null;
+  if (route.screen === 'filing') {
+    try {
+      const clients = JSON.parse(localStorage.getItem('gst-helper-clients-v1') || '[]');
+      selectedClient = Array.isArray(clients) ? clients.find(client => client.id === route.clientId) : null;
+    } catch { /* show the client list if this client cannot be loaded */ }
+  }
+  const period = { month: route.month, year: route.year };
   const changePeriod = (month, year) => {
-    setPeriod({ month, year });
+    navigate({ screen: 'filing', clientId: selectedClient.id, month, year });
     try { localStorage.setItem(`gst-helper-period-${selectedClient.id}`, JSON.stringify({ month, year })); } catch { /* uploads use IndexedDB */ }
   };
   const openClient = (client, selectedPeriod) => {
@@ -978,11 +1015,10 @@ export default function App() {
     } catch { /* keep the current period */ }
     if (selectedPeriod) next = { month: selectedPeriod.month, year: selectedPeriod.year };
     try { localStorage.setItem(`gst-helper-period-${client.id}`, JSON.stringify(next)); } catch { /* optional preference */ }
-    setPeriod(next);
-    setSelectedClient(client);
+    navigate({ screen: 'filing', clientId: client.id, ...next });
   };
   return <><ThemeToggle />{selectedClient
     ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
-        month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => setSelectedClient(null)} />
-    : <ClientHome onOpen={openClient} />}</>;
+        month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => navigate({ screen: 'clients' })} />
+    : <ClientHome key={route.screen} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient} />}</>;
 }
