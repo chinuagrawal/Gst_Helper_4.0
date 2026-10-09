@@ -418,6 +418,12 @@ function App() {
                 🏷️ HSN ({summary.hsnCount})
               </button>
               <button
+                className={`tab ${activeTab === "eco" ? "active" : ""}`}
+                onClick={() => setActiveTab("eco")}
+              >
+                Supplies made through E-Commerce Operators
+              </button>
+              <button
                 className={`tab ${activeTab === "docs" ? "active" : ""}`}
                 onClick={() => setActiveTab("docs")}
               >
@@ -726,6 +732,46 @@ function App() {
                               minimumFractionDigits: 2,
                             })}
                           </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "eco" && (
+              <div className="tab-content">
+                <h3>14 - Supplies made through E-Commerce Operators</h3>
+                <p>Liable to collect tax u/s 52 (TCS)</p>
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>GSTIN of e-commerce operator</th>
+                        <th>Trade/Legal Name</th>
+                        <th>Net value of supplies (₹)</th>
+                        <th>Integrated tax (₹)</th>
+                        <th>Central tax (₹)</th>
+                        <th>State/UT tax (₹)</th>
+                        <th>Cess (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(output.supeco?.clttx || []).map((operator, i) => (
+                        <tr key={`${operator.etin}-${i}`}>
+                          <td><code>{operator.etin}</code></td>
+                          <td>{operator.etin?.slice(2, 12) === "AARCM9332R"
+                            ? "MEESHO TECHNOLOGIES PRIVATE LIMITED" : "—"}</td>
+                          {[operator.suppval, operator.igst, operator.cgst,
+                            operator.sgst, operator.cess].map((amount, index) => (
+                            <td className="num" key={index}>
+                              {amount.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
