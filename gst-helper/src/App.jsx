@@ -7,6 +7,8 @@ import {
   validateOutputStructure,
 } from "./utils/compare.js";
 import "./App.css";
+import "./theme.css";
+import ThemeToggle from "./ThemeToggle.jsx";
 import ClientHome from "./ClientHome.jsx";
 import { filingKey, restoreFiling, saveFiling } from "./utils/filingStorage.js";
 import { downloadFileName } from "./utils/filingDashboard.js";
@@ -979,8 +981,8 @@ export default function App() {
     setPeriod(next);
     setSelectedClient(client);
   };
-  return selectedClient
+  return <><ThemeToggle />{selectedClient
     ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
         month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => setSelectedClient(null)} />
-    : <ClientHome onOpen={openClient} />;
+    : <ClientHome onOpen={openClient} />}</>;
 }

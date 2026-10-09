@@ -46,12 +46,17 @@ export default function Dashboard({ clients, filings, filingStatus, error, onTog
           <label className="field client-search">Search clients<input type="search" value={query} placeholder="Name or GST number" onChange={e => setQuery(e.target.value)} /></label>
           <div className="table-wrap"><table className="data-table">
             <thead><tr><th>Client</th><th>GST number</th><th>Activity</th><th>Uploads</th><th>Monthly work</th><th>Actions</th></tr></thead>
-            <tbody>{visible.map(({ client, uploaded, completed }) => <tr key={client.id}>
-              <td><strong>{client.tradeName}</strong><div>{client.partyName}</div></td><td><code>{client.gstin}</code></td>
-              <td>{client.active === false ? 'Inactive' : 'Active'}</td><td>{uploaded}/3 files</td>
-              <td><span className={completed ? 'upload-status' : ''}>{completed ? 'Completed' : 'Pending'}</span></td>
-              <td><div className="client-actions"><button className="btn btn-primary" onClick={() => onOpen(client, { month, year })}>Open month</button>
-                <button className="btn btn-secondary" onClick={() => onToggle(client)}>{client.active === false ? 'Make active' : 'Make inactive'}</button></div></td>
+            <tbody>{visible.map(({ client, uploaded, completed }) => <tr key={client.id}
+              className="client-row" onClick={() => onOpen(client, { month, year })}>
+              <td><button className="client-open" onClick={event => {
+                event.stopPropagation(); onOpen(client, { month, year });
+              }}><strong>{client.tradeName}</strong></button><div>{client.partyName}</div></td><td><code>{client.gstin}</code></td>
+              <td><span className={`status-pill ${client.active === false ? 'status-neutral' : 'status-success'}`}>{client.active === false ? 'Inactive' : 'Active'}</span></td><td><span className="file-count">{uploaded}/3 files</span></td>
+              <td><span className={`status-pill ${completed ? 'status-success' : 'status-pending'}`}>{completed ? 'Completed' : 'Pending'}</span></td>
+              <td><div className="client-actions">
+                <button className="btn btn-secondary" onClick={event => {
+                  event.stopPropagation(); onToggle(client);
+                }}>{client.active === false ? 'Make active' : 'Make inactive'}</button></div></td>
             </tr>)}{!visible.length && <tr><td colSpan={6} className="client-empty">No clients match these filters.</td></tr>}</tbody>
           </table></div>
         </>}
