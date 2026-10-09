@@ -5,6 +5,26 @@ export default function useTableKeyboard() {
   useEffect(() => {
     const root = document.getElementById('root');
     const cellSelector = '.data-table th, .data-table td';
+    const initializedScreens = new WeakSet();
+    const workflowControls = main => [...main.querySelectorAll(
+      '.upload-box[aria-disabled="false"], .actions-row button:not(:disabled), .ref-row button:not(:disabled)'
+    )].filter(control => control.getClientRects().length > 0);
+    const defaultControl = main => main.dataset.keyboardScreen === 'dashboard'
+      ? main.querySelector('.data-table tbody .client-row td')
+      : workflowControls(main)[0];
+    const focusDefault = () => {
+      const main = root.querySelector('[data-keyboard-screen]');
+      if (!main) return;
+      const target = defaultControl(main);
+      if (!target) return;
+      const active = document.activeElement;
+      if (!initializedScreens.has(main) || active === document.body) {
+        // Wait for saved uploads/rows to load, and avoid interrupting form entry.
+        if (active?.matches('input, select, textarea') || active?.isContentEditable) return;
+        initializedScreens.add(main);
+        target.focus({ preventScroll: true });
+      }
+    };
     const initialize = () => {
       root.querySelectorAll('.data-table').forEach(table => {
         const cells = [...table.querySelectorAll('th, td')];
@@ -17,6 +37,7 @@ export default function useTableKeyboard() {
         table.setAttribute('aria-label', table.getAttribute('aria-label') ||
           'Data table. Use arrow keys to move between cells and Enter to activate.');
       });
+      focusDefault();
     };
     const activate = (cell, focus = true) => {
       cell.closest('table').querySelectorAll('th, td').forEach(item => {
@@ -29,8 +50,29 @@ export default function useTableKeyboard() {
       if (cell) activate(cell, false);
     };
     const onKeyDown = event => {
+      if (event.defaultPrevented || event.altKey || event.isComposing) return;
+      const target = event.target;
+      if (target.matches?.('input, select, textarea') || target.isContentEditable) return;
+      const main = target.closest?.('[data-keyboard-screen]');
+      const arrows = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+      if (main?.dataset.keyboardScreen === 'generator' && !target.closest('.data-table') && arrows.includes(event.key)) {
+        if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+        const controls = workflowControls(main);
+        const index = controls.indexOf(target.closest('.upload-box, button'));
+        const direction = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1;
+        const next = controls[index < 0 ? 0 : Math.max(0, Math.min(controls.length - 1, index + direction))];
+        if (next) { event.preventDefault(); next.focus(); }
+        return;
+      }
       const cell = event.target.closest?.(cellSelector);
-      if (!cell || event.target !== cell || event.altKey) return;
+      if (!cell) {
+        if (main?.dataset.keyboardScreen === 'dashboard' && arrows.includes(event.key)) {
+          const first = defaultControl(main);
+          if (first) { event.preventDefault(); activate(first); }
+        }
+        return;
+      }
+      if (event.target !== cell && !arrows.includes(event.key)) return;
       const table = cell.closest('table');
       const rows = [...table.rows];
       const row = cell.parentElement;

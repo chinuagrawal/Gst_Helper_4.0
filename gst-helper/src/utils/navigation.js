@@ -1,6 +1,6 @@
 export function readRoute(hash) {
   const [screen, query = ''] = hash.replace(/^#\/?/, '').split('?');
-  if (screen === 'clients') return { screen: 'clients' };
+  if (screen === 'clients') return query.includes('new=1') ? { screen: 'clients', newClient: true } : { screen: 'clients' };
   if (screen === 'filing') {
     const params = new URLSearchParams(query);
     const month = Number(params.get('month'));
@@ -18,5 +18,5 @@ export function routeHash(route) {
   if (route.screen === 'filing') {
     return `#/filing?${new URLSearchParams({ client: route.clientId, month: route.month, year: route.year })}`;
   }
-  return route.screen === 'clients' ? '#/clients' : '#/dashboard';
+  return route.screen === 'clients' ? `#/clients${route.newClient ? '?new=1' : ''}` : '#/dashboard';
 }

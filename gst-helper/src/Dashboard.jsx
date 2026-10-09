@@ -19,7 +19,7 @@ export default function Dashboard({ clients, filings, filingStatus, error, onTog
 
   return <div className="app">
     <header className="app-header"><h1>GST Helper · Dashboard</h1><p className="subtitle">Track client activity and monthly work.</p></header>
-    <main className="container">
+    <main className="container" data-keyboard-screen="dashboard">
       <div className="client-toolbar">
         <h2>Dashboard</h2><button className="btn btn-secondary" onClick={onClients}>Manage clients</button>
       </div>

@@ -10,6 +10,7 @@ import "./App.css";
 import "./theme.css";
 import ThemeToggle from "./ThemeToggle.jsx";
 import useTableKeyboard from "./useTableKeyboard.js";
+import ShortcutHelp from "./ShortcutHelp.jsx";
 import { readRoute, routeHash } from "./utils/navigation.js";
 import ClientHome from "./ClientHome.jsx";
 import { filingKey, restoreFiling, saveFiling } from "./utils/filingStorage.js";
@@ -308,7 +309,7 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
         </p>
       </header>
 
-      <main className="container">
+      <main className="container" data-keyboard-screen="generator">
         <section className="card client-context">
           <button className="btn btn-secondary" disabled={loading || saveStatus === 'Saving…'} onClick={onBack}>← All clients</button>
           <div>
@@ -363,6 +364,16 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
               <div
                 key={type}
                 className={`upload-box ${files[type] ? "has-file" : ""}`}
+                role="button"
+                tabIndex={restored && !loading ? 0 : -1}
+                aria-disabled={!restored || loading}
+                aria-label={`Upload ${fileLabels[type]}`}
+                onKeyDown={event => {
+                  if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    if (restored && !loading) fileInputs[type].current?.click();
+                  }
+                }}
                 onClick={() => restored && !loading && fileInputs[type].current?.click()}
               >
                 <input
@@ -400,6 +411,7 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
             <button
               className="btn btn-primary"
               onClick={handleGenerate}
+              data-shortcut="g"
               disabled={!restored || !isReady || loading}
             >
               {loading ? "Processing..." : "⚡ Generate Output"}
@@ -408,6 +420,7 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
               <button
                 className="btn btn-success"
                 onClick={handleDownload}
+                data-shortcut="j"
                 disabled={!downloadAllowed}
                 title={
                   !downloadAllowed
@@ -975,7 +988,7 @@ export default function App() {
         event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
       if (event.key !== 'Escape' && event.key !== 'Backspace') return;
       const target = event.target;
-      if (target instanceof Element && (target.closest('input, textarea, select, [role="textbox"]') ||
+      if (target instanceof Element && (target.closest('dialog, input, textarea, select, [role="textbox"]') ||
         target.isContentEditable)) return;
       event.preventDefault();
       window.history.back();
@@ -1017,8 +1030,8 @@ export default function App() {
     try { localStorage.setItem(`gst-helper-period-${client.id}`, JSON.stringify(next)); } catch { /* optional preference */ }
     navigate({ screen: 'filing', clientId: client.id, ...next });
   };
-  return <><ThemeToggle />{selectedClient
+  return <><ThemeToggle /><ShortcutHelp onNavigate={navigate} />{selectedClient
     ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
         month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => navigate({ screen: 'clients' })} />
-    : <ClientHome key={route.screen} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient} />}</>;
+    : <ClientHome key={routeHash(route)} newClient={route.newClient} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient} />}</>;
 }

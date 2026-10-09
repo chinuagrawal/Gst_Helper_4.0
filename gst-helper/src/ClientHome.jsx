@@ -22,15 +22,29 @@ function readClients() {
   }
 }
 
-export default function ClientHome({ onOpen, view = 'dashboard', onNavigate }) {
+export default function ClientHome({ onOpen, view = 'dashboard', onNavigate, newClient = false }) {
   const [initial] = useState(readClients);
   const [clients, setClients] = useState(initial.clients);
   const [error, setError] = useState(initial.error);
-  const [draft, setDraft] = useState(null);
+  const [draft, setDraft] = useState(newClient ? { ...emptyClient } : null);
   const [deleteId, setDeleteId] = useState(null);
   const [query, setQuery] = useState('');
   const [filings, setFilings] = useState([]);
   const [filingStatus, setFilingStatus] = useState('Loading saved months…');
+
+  useEffect(() => {
+    if (!draft) return;
+    const closeForm = event => {
+      if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing ||
+        document.querySelector('dialog[open]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setDraft(null);
+      setError(initial.error);
+    };
+    window.addEventListener('keydown', closeForm, true);
+    return () => window.removeEventListener('keydown', closeForm, true);
+  }, [draft, initial.error]);
 
   useEffect(() => {
     let cancelled = false;
