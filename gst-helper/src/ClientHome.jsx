@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClientId } from './utils/clientId.js';
+import { listFilings } from './utils/filingStorage.js';
+import { summarizeFiling } from './utils/filingDashboard.js';
+import Dashboard from './Dashboard.jsx';
 
 const STORAGE_KEY = 'gst-helper-clients-v1';
-const emptyClient = { tradeName: '', partyName: '', gstin: '', returnFrequency: 'Quarterly' };
+const emptyClient = { tradeName: '', partyName: '', gstin: '', returnFrequency: 'Quarterly', active: true };
 
 function readClients() {
   try {
@@ -26,6 +29,22 @@ export default function ClientHome({ onOpen }) {
   const [draft, setDraft] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [query, setQuery] = useState('');
+  const [view, setView] = useState('dashboard');
+  const [filings, setFilings] = useState([]);
+  const [filingStatus, setFilingStatus] = useState('Loading saved months…');
+
+  useEffect(() => {
+    let cancelled = false;
+    listFilings().then(records => {
+      if (cancelled) return;
+      setFilings(records.map(record => summarizeFiling(record.key, record.saved)).filter(Boolean)
+        .sort((a, b) => b.year - a.year || b.month - a.month));
+      setFilingStatus('');
+    }).catch(() => {
+      if (!cancelled) setFilingStatus('Saved months could not be loaded. Reopen the client list to retry.');
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   function persist(next) {
     if (initial.error) {
@@ -73,6 +92,11 @@ export default function ClientHome({ onOpen }) {
   const filtered = clients.filter(client =>
     `${client.tradeName} ${client.partyName} ${client.gstin}`.toLowerCase().includes(query.toLowerCase()));
 
+  if (view === 'dashboard') return <Dashboard clients={clients} filings={filings} filingStatus={filingStatus}
+    error={error} onClients={() => setView('clients')} onOpen={onOpen}
+    onToggle={client => persist(clients.map(item => item.id === client.id
+      ? { ...item, active: item.active === false } : item))} />;
+
   return (
     <div className="app">
       <header className="app-header">
@@ -83,11 +107,13 @@ export default function ClientHome({ onOpen }) {
         <section className="card">
           <div className="client-toolbar">
             <h2>Your clients ({clients.length})</h2>
+            <button className="btn btn-secondary" onClick={() => setView('dashboard')}>Dashboard</button>
             <button className="btn btn-primary" onClick={() => {
               setDraft({ ...emptyClient }); setDeleteId(null); setError(initial.error);
             }}>+ Add client</button>
           </div>
           <p className="client-storage-note">Client details are saved in this browser on this device.</p>
+          {filingStatus && <p className="client-storage-note" role="status">{filingStatus}</p>}
           {error && <div className="error-msg" role="alert">{error}</div>}
           {draft && (
             <form className="client-form" onSubmit={saveClient}>
@@ -131,12 +157,25 @@ export default function ClientHome({ onOpen }) {
           </label>
           <div className="table-wrap">
             <table className="data-table">
-              <thead><tr><th>Trade name</th><th>Party name</th><th>GST number</th><th>Return frequency</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Trade name</th><th>Party name</th><th>GST number</th><th>Return frequency</th><th>Saved months & return status</th><th>Actions</th></tr></thead>
               <tbody>
                 {filtered.map(client => (
                   <tr className="client-row" key={client.id} onClick={() => onOpen(client)}>
                     <td><button className="client-open" onClick={e => { e.stopPropagation(); onOpen(client); }}>{client.tradeName}</button></td>
                     <td>{client.partyName}</td><td><code>{client.gstin}</code></td><td>{client.returnFrequency}</td>
+                    <td>
+                      <div className="saved-months">
+                        {filings.filter(filing => filing.clientId === client.id).map(filing => (
+                          <button className="saved-month" key={`${filing.year}-${filing.month}`}
+                            onClick={event => { event.stopPropagation(); onOpen(client, filing); }}>
+                            <strong>{new Date(filing.year, filing.month - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</strong>
+                            <span>{filing.uploaded}/3 files uploaded</span>
+                            <span className={filing.status === 'Ready to download' ? 'upload-status' : ''}>{filing.status}</span>
+                          </button>
+                        ))}
+                        {!filingStatus && !filings.some(filing => filing.clientId === client.id) && <span>No saved months</span>}
+                      </div>
+                    </td>
                     <td><div className="client-actions">
                       <button className="btn btn-secondary" onClick={e => {
                         e.stopPropagation(); setDraft({ ...client }); setDeleteId(null); setError(initial.error);
@@ -147,7 +186,7 @@ export default function ClientHome({ onOpen }) {
                     </div></td>
                   </tr>
                 ))}
-                {!filtered.length && <tr><td colSpan={5} className="client-empty">
+                {!filtered.length && <tr><td colSpan={6} className="client-empty">
                   {clients.length ? 'No clients match your search.' : 'No clients yet. Add your first client to get started.'}
                 </td></tr>}
               </tbody>

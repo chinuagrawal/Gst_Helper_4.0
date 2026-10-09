@@ -9,6 +9,7 @@ import {
 import "./App.css";
 import ClientHome from "./ClientHome.jsx";
 import { filingKey, restoreFiling, saveFiling } from "./utils/filingStorage.js";
+import { downloadFileName } from "./utils/filingDashboard.js";
 
 const MONTHS = [
   { value: 1, label: "January" },
@@ -249,12 +250,12 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "output.json";
+    a.download = downloadFileName(client, output.fp);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [output, reference]);
+  }, [output, reference, client]);
 
   const handleReset = useCallback(() => {
     setFiles({
@@ -967,12 +968,14 @@ export default function App() {
     setPeriod({ month, year });
     try { localStorage.setItem(`gst-helper-period-${selectedClient.id}`, JSON.stringify({ month, year })); } catch { /* uploads use IndexedDB */ }
   };
-  const openClient = client => {
+  const openClient = (client, selectedPeriod) => {
     let next = { month: new Date().getMonth() + 1, year: getCurrentYear() };
     try {
       const saved = JSON.parse(localStorage.getItem(`gst-helper-period-${client.id}`));
       if (saved && Number.isInteger(saved.month) && saved.month >= 1 && saved.month <= 12 && Number.isInteger(saved.year)) next = saved;
     } catch { /* keep the current period */ }
+    if (selectedPeriod) next = { month: selectedPeriod.month, year: selectedPeriod.year };
+    try { localStorage.setItem(`gst-helper-period-${client.id}`, JSON.stringify(next)); } catch { /* optional preference */ }
     setPeriod(next);
     setSelectedClient(client);
   };

@@ -35,6 +35,14 @@
 .client-row:hover { background: rgba(56, 189, 248, .08); }
 .client-open { color: #7dd3fc; background: transparent; border: 0; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; padding: 8px 0; }
 .client-empty { padding: 35px !important; text-align: center; color: #94a3b8; }
+.saved-months { display: flex; flex-wrap: wrap; gap: 8px; min-width: 210px; }
+.saved-month { display: flex; flex-direction: column; gap: 4px; text-align: left; background: #0f172a; color: #cbd5e1; border: 1px solid #475569; border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit; }
+.saved-month:hover, .saved-month:focus-visible { border-color: #38bdf8; }
+.saved-month strong { color: #7dd3fc; }
+.saved-month span { font-size: 12px; }
+.dashboard-filters { display: flex; flex-wrap: wrap; gap: 12px; }
+.dashboard-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 20px; }
+@media (max-width: 600px) { .dashboard-counts { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .client-form-grid { grid-template-columns: 1fr; } }
 
 body {

@@ -36,3 +36,22 @@ export async function restoreFiling(key) {
   await writes.catch(() => {});
   return transact('readonly', key);
 }
+
+export async function listFilings() {
+  await writes.catch(() => {});
+  const db = await openDatabase();
+  try {
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction('filings', 'readonly');
+      const request = transaction.objectStore('filings').openCursor();
+      const records = [];
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) { records.push({ key: cursor.key, saved: cursor.value }); cursor.continue(); }
+      };
+      transaction.oncomplete = () => resolve(records);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  } finally { db.close(); }
+}
