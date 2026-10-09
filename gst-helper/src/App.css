@@ -4,6 +4,39 @@
   padding: 0;
 }
 
+.client-toolbar, .client-context { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.client-toolbar h2, .client-context h2 { margin-bottom: 0; }
+.client-context { justify-content: flex-start; }
+.compact-period { margin-left: auto; }
+.period-title { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+.compact-period .period-row { display: flex; gap: 8px; align-items: flex-end; }
+.compact-period .field { gap: 4px; }
+.compact-period .field label { font-size: 11px; }
+.compact-period .field select { padding: 7px 9px; font-size: 13px; }
+.compact-period .fp-value { padding: 7px 9px; font-size: 13px; }
+@media (max-width: 600px) {
+  .compact-period { width: 100%; margin-left: 0; }
+  .compact-period .period-row { flex-wrap: wrap; }
+}
+.client-context p, .client-storage-note { color: #94a3b8; margin-top: 8px; }
+.client-storage-note { margin-bottom: 20px; font-size: 13px; }
+.client-form, .client-delete { padding: 20px; border: 1px solid #475569; border-radius: 10px; margin-bottom: 20px; background: #0f172a; }
+.client-form h3 { margin-bottom: 18px; }
+.client-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 20px; }
+.client-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.client-delete p { margin-bottom: 15px; }
+.client-search { margin-bottom: 20px; max-width: 460px; }
+.client-form .field, .client-search { font-size: 13px; color: #cbd5e1; }
+.client-form input, .client-search input { width: 100%; padding: 12px 14px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f1f5f9; font: inherit; }
+.client-form input:focus, .client-search input:focus { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.btn-danger { background: #7f1d1d; color: #fecaca; border: 1px solid #b91c1c; }
+.btn-danger:hover { background: #991b1b; }
+.client-row { cursor: pointer; }
+.client-row:hover { background: rgba(56, 189, 248, .08); }
+.client-open { color: #7dd3fc; background: transparent; border: 0; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; padding: 8px 0; }
+.client-empty { padding: 35px !important; text-align: center; color: #94a3b8; }
+@media (max-width: 600px) { .client-form-grid { grid-template-columns: 1fr; } }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { parseExcelFile, detectFileByColumns, detectFilingPeriod } from "./utils/excelParser.js";
 import { generateOutput, buildSummary, alignOutputOrder } from "./utils/calculator.js";
 import { POS_TO_STATE, buildFP } from "./utils/constants.js";
@@ -7,6 +7,8 @@ import {
   validateOutputStructure,
 } from "./utils/compare.js";
 import "./App.css";
+import ClientHome from "./ClientHome.jsx";
+import { filingKey, restoreFiling, saveFiling } from "./utils/filingStorage.js";
 
 const MONTHS = [
   { value: 1, label: "January" },
@@ -27,7 +29,7 @@ function getCurrentYear() {
   return new Date().getFullYear();
 }
 
-function App() {
+function Generator({ client, onBack, month, year, onPeriodChange }) {
   const [files, setFiles] = useState({
     tcs_sales: null,
     tcs_sales_return: null,
@@ -43,8 +45,9 @@ function App() {
     tcs_sales_return: null,
     Tax_invoice_details: null,
   });
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(getCurrentYear());
+  const [restored, setRestored] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('Loading saved uploads…');
+  const [manageFiles, setManageFiles] = useState(false);
   const [output, setOutput] = useState(null);
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState("");
@@ -61,6 +64,41 @@ function App() {
     Tax_invoice_details: useRef(null),
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    restoreFiling(filingKey(client.id, month, year)).then(saved => {
+      if (cancelled) return;
+      if (saved) {
+        setFiles(saved.files); setFileNames(saved.fileNames); setRows(saved.rows);
+        setOutput(saved.output); setSummary(saved.summary);
+        setReference(saved.reference); setReferenceName(saved.referenceName);
+        setComparison(saved.comparison); setStructureIssues(saved.structureIssues);
+      }
+      setRestored(true);
+      setSaveStatus(saved ? 'Saved uploads restored for this month.' : 'Uploads will be saved for this month.');
+    }).catch(() => {
+      if (!cancelled) setSaveStatus('Unable to load saved uploads. Refresh and check browser storage.');
+    });
+    return () => { cancelled = true; };
+  }, [client.id, month, year]);
+
+  useEffect(() => {
+    if (!restored) return;
+    let cancelled = false;
+    // This effect synchronizes the save indicator with the browser database.
+    // eslint-disable-next-line react/set-state-in-effect
+    setSaveStatus('Saving…');
+    saveFiling(filingKey(client.id, month, year), {
+      files, fileNames, rows, output, summary, reference, referenceName, comparison, structureIssues,
+    }).then(() => {
+      if (!cancelled) setSaveStatus('Saved for this month on this device.');
+    }).catch(() => {
+      if (!cancelled) setSaveStatus('Uploads could not be saved. Check browser storage before leaving.');
+    });
+    return () => { cancelled = true; };
+  }, [restored, client.id, month, year, files, fileNames, rows, output,
+    summary, reference, referenceName, comparison, structureIssues]);
+
   const fileLabels = {
     tcs_sales: "tcs_sales.xlsx",
     tcs_sales_return: "tcs_sales_return.xlsx",
@@ -75,6 +113,15 @@ function App() {
       const parsed = await parseExcelFile(file);
       const detected = detectFileByColumns(parsed);
       if (!detected) throw new Error('The spreadsheet is empty or has unrecognized columns.');
+      if (detected === 'tcs_sales' || detected === 'tcs_sales_return') {
+        const period = detectFilingPeriod(parsed);
+        if (period && (period.month !== month || period.year !== year)) {
+          throw new Error(`Select ${MONTHS[period.month - 1].label} ${period.year} before uploading this file.`);
+        }
+        if (parsed.some(row => row.gstin && row.gstin !== client.gstin)) {
+          throw new Error('The spreadsheet GST number does not match this client.');
+        }
+      }
       let finalType = type;
       if (detected && detected !== type) {
         console.warn(
@@ -85,10 +132,7 @@ function App() {
       setFiles((prev) => ({ ...prev, [finalType]: file }));
       setFileNames((prev) => ({ ...prev, [finalType]: file.name }));
       setRows((prev) => ({ ...prev, [finalType]: parsed }));
-      if (finalType === 'tcs_sales') {
-        const period = detectFilingPeriod(parsed);
-        if (period) { setMonth(period.month); setYear(period.year); }
-      }
+      setManageFiles(false);
       setOutput(null);
       setSummary(null);
       setComparison(null);
@@ -98,7 +142,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [month, year, client.gstin]);
 
   const handleGenerate = useCallback(() => {
     setError("");
@@ -130,6 +174,9 @@ function App() {
         year,
         reference,
       );
+      if (out.gstin !== client.gstin) {
+        throw new Error(`The uploaded sales GSTIN (${out.gstin}) does not match this client (${client.gstin}).`);
+      }
       const sum = buildSummary(rows.tcs_sales, rows.tcs_sales_return, out);
       const issues = validateOutputStructure(out);
       setOutput(out);
@@ -144,7 +191,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [rows, month, year, reference]);
+  }, [rows, month, year, reference, client.gstin]);
 
   const handleReferenceChange = useCallback(
     async (file) => {
@@ -257,18 +304,66 @@ function App() {
       </header>
 
       <main className="container">
-        <section className="card upload-section">
+        <section className="card client-context">
+          <button className="btn btn-secondary" disabled={loading || saveStatus === 'Saving…'} onClick={onBack}>← All clients</button>
+          <div>
+            <h2>{client.tradeName}</h2>
+            <p>{client.partyName} · {client.gstin} · {client.returnFrequency} return</p>
+          </div>
+        <div className="compact-period">
+          <span className="period-title">Filing period</span>
+          <div className="period-row">
+            <div className="field">
+              <label htmlFor="filing-month">Month</label>
+              <select
+                id="filing-month" value={month}
+                disabled={loading || saveStatus === 'Saving…'}
+                onChange={(e) => onPeriodChange(Number(e.target.value), year)}
+              >
+                {MONTHS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filing-year">Year</label>
+              <select
+                id="filing-year" value={year}
+                disabled={loading || saveStatus === 'Saving…'}
+                onChange={(e) => onPeriodChange(month, Number(e.target.value))}
+              >
+                {Array.from(
+                  { length: 7 },
+                  (_, i) => getCurrentYear() - 3 + i,
+                ).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field fp-preview">
+              <label>FP (filing period)</label>
+              <div className="fp-value">{buildFP(month, year)}</div>
+            </div>
+          </div>
+        </div>
+        </section>
+        {(!isReady || manageFiles) && <section className="card upload-section">
           <h2>Step 1: Upload Excel Files</h2>
           <div className="upload-grid">
             {Object.keys(fileLabels).map((type) => (
               <div
                 key={type}
                 className={`upload-box ${files[type] ? "has-file" : ""}`}
-                onClick={() => fileInputs[type].current?.click()}
+                onClick={() => restored && !loading && fileInputs[type].current?.click()}
               >
                 <input
                   ref={fileInputs[type]}
                   type="file"
+                  disabled={!restored || loading}
                   accept=".xlsx,.xls"
                   style={{ display: "none" }}
                   onChange={(e) => handleFileChange(type, e.target.files?.[0])}
@@ -286,53 +381,21 @@ function App() {
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="card settings-section">
-          <h2>Step 2: Select Filing Period</h2>
-          <div className="period-row">
-            <div className="field">
-              <label>Month</label>
-              <select
-                value={month}
-                onChange={(e) => { setMonth(Number(e.target.value)); setOutput(null); setSummary(null); setComparison(null); }}
-              >
-                {MONTHS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Year</label>
-              <select
-                value={year}
-                onChange={(e) => { setYear(Number(e.target.value)); setOutput(null); setSummary(null); setComparison(null); }}
-              >
-                {Array.from(
-                  { length: 7 },
-                  (_, i) => getCurrentYear() - 3 + i,
-                ).map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field fp-preview">
-              <label>FP (filing period)</label>
-              <div className="fp-value">{buildFP(month, year)}</div>
-            </div>
-          </div>
-        </section>
+        </section>}
 
         <section className="card action-section">
+          <p className="client-storage-note" role="status">{saveStatus}</p>
           <div className="actions-row">
+            {isReady && (
+              <button className="btn btn-secondary" onClick={() => setManageFiles(value => !value)}
+                aria-expanded={manageFiles}>
+                {manageFiles ? 'Hide files' : 'Manage files'}
+              </button>
+            )}
             <button
               className="btn btn-primary"
               onClick={handleGenerate}
-              disabled={!isReady || loading}
+              disabled={!restored || !isReady || loading}
             >
               {loading ? "Processing..." : "⚡ Generate Output"}
             </button>
@@ -350,7 +413,7 @@ function App() {
                 💾 Download output.json
               </button>
             )}
-            <button className="btn btn-secondary" onClick={handleReset}>
+            <button className="btn btn-secondary" disabled={!restored || loading} onClick={handleReset}>
               🔄 Reset
             </button>
           </div>
@@ -358,6 +421,7 @@ function App() {
             <input
               ref={referenceInput}
               type="file"
+              disabled={!restored || loading}
               accept=".json,application/json"
               style={{ display: "none" }}
               onChange={(e) => handleReferenceChange(e.target.files?.[0])}
@@ -896,4 +960,24 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [period, setPeriod] = useState({ month: new Date().getMonth() + 1, year: getCurrentYear() });
+  const changePeriod = (month, year) => {
+    setPeriod({ month, year });
+    try { localStorage.setItem(`gst-helper-period-${selectedClient.id}`, JSON.stringify({ month, year })); } catch { /* uploads use IndexedDB */ }
+  };
+  const openClient = client => {
+    let next = { month: new Date().getMonth() + 1, year: getCurrentYear() };
+    try {
+      const saved = JSON.parse(localStorage.getItem(`gst-helper-period-${client.id}`));
+      if (saved && Number.isInteger(saved.month) && saved.month >= 1 && saved.month <= 12 && Number.isInteger(saved.year)) next = saved;
+    } catch { /* keep the current period */ }
+    setPeriod(next);
+    setSelectedClient(client);
+  };
+  return selectedClient
+    ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
+        month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => setSelectedClient(null)} />
+    : <ClientHome onOpen={openClient} />;
+}
