@@ -129,6 +129,24 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .theme-toggle { position: absolute; z-index: 10; top: 22px; right: max(24px, calc((100vw - 1280px) / 2 + 24px)); display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); font-size: 12px; cursor: pointer; }
 .theme-toggle span { font-size: 17px; line-height: 1; }
+.account-bar { padding: 8px 24px; }
+.account-bar .theme-toggle { position: static; flex-shrink: 0; min-height: 34px; }
+.workspace-loading { min-height: calc(100vh - 50px); }
+.loading-card { width: min(420px, 100%); padding: 36px 28px; text-align: center; }
+.loading-card h1 { font-size: 21px; letter-spacing: -.5px; margin: 10px 0; }
+.loading-card p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.loading-card .btn { margin: 0 4px; }
+.loading-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--muted); }
+.workspace-orbit { position: relative; width: 76px; height: 76px; display: grid; place-items: center; margin: 0 auto 24px; }
+.workspace-orbit::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); border-right-color: var(--accent); animation: workspace-spin 1.3s linear infinite; }
+.workspace-orbit span { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 15px; background: var(--accent-soft); color: var(--accent); font-size: 27px; font-weight: 750; }
+.workspace-orbit.has-error::before { animation: none; border-color: #c47c65; }
+.loading-dots { display: flex; justify-content: center; gap: 7px; margin-bottom: 20px; }
+.loading-dots i { height: 5px; width: 5px; border-radius: 50%; background: var(--accent); animation: workspace-pulse 1.2s ease-in-out infinite; }
+.loading-dots i:nth-child(2) { animation-delay: .15s; }
+.loading-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes workspace-spin { to { transform: rotate(360deg); } }
+@keyframes workspace-pulse { 50% { opacity: .25; transform: translateY(-3px); } }
 .app { padding-bottom: 44px; }
 .help-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 24px; color: var(--muted); font-size: 11px; }
 .help-bar button { border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }

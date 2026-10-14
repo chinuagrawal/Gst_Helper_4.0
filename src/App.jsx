@@ -8,7 +8,6 @@ import {
 } from "./utils/compare.js";
 import "./App.css";
 import "./theme.css";
-import ThemeToggle from "./ThemeToggle.jsx";
 import useTableKeyboard from "./useTableKeyboard.js";
 import ShortcutHelp from "./ShortcutHelp.jsx";
 import FirebaseGate from "./FirebaseGate.jsx";
@@ -1032,7 +1031,7 @@ function Workspace() {
     try { localStorage.setItem(`gst-helper-period-${client.id}`, JSON.stringify(next)); } catch { /* optional preference */ }
     navigate({ screen: 'filing', clientId: client.id, ...next });
   };
-  return <><ThemeToggle /><ShortcutHelp onNavigate={navigate} />{selectedClient
+  return <><ShortcutHelp onNavigate={navigate} />{selectedClient
     ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
         month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => navigate({ screen: 'clients' })} />
     : <ClientHome key={routeHash(route)} newClient={route.newClient} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient} />}</>;
