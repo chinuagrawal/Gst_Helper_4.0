@@ -1,16 +1,7 @@
-# React + Vite
+# GST Helper application
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Application code is in `src`, the favicon is in `public`, and regression checks are in `tests`.
 
-Currently, two official plugins are available:
+Run `npm install` then `npm run dev` in this folder. Use `npm test`, `npm run lint`, and `npm run build` for routine checks.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+`npm run test:repotic` requires the original September 2026 comparison dataset. See [comparison workflow](docs/repotic-workflow.md). General setup and the project folder map are in the [root README](../README.md).

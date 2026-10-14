@@ -1,16 +1,12 @@
 {
-  "name": "gst_helper_4.0",
+  "name": "gst-helper-workspace",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "xlsx": "^0.18.5"
+    "dev": "npm --prefix gst-helper run dev",
+    "build": "npm --prefix gst-helper run build",
+    "lint": "npm --prefix gst-helper run lint",
+    "test": "npm --prefix gst-helper test",
+    "test:repotic": "npm --prefix gst-helper run test:repotic"
   }
 }
