@@ -6,6 +6,8 @@ The app now lives directly in this project root.
 
 Run `npm ci`, then `npm run dev` from this folder.
 
+Phone OTP login and private cloud storage use the supplied `gstfiling-66d45` project configuration. Follow [Firebase setup](docs/firebase-setup.md) to enable the services and publish rules. Optional `.env.local` values override the included web configuration.
+
 - `npm test` — local application tests.
 - `npm run lint` — source checks.
 - `npm run build` — production build in `dist`.
@@ -16,7 +18,7 @@ Run `npm ci`, then `npm run dev` from this folder.
 
 Use the repository root as the Root Directory. The included `vercel.json` selects Vite, installs with `npm ci`, builds with `npm run build`, and serves `dist`.
 
-Hash navigation needs no server rewrites. Clients and uploads are saved in browser storage. Local browser data does not automatically transfer to a new deployment address.
+Hash navigation needs no server rewrites. Authorize the deployed hostname in Firebase Authentication. Clients and monthly uploads are stored under the signed-in account. Existing browser data can be explicitly imported from the old origin after login.
 
 ## Folders
 

@@ -8,6 +8,11 @@
   --accent-soft: #e9f6f3;
   color-scheme: light;
 }
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.login-card { width: min(440px, 100%); }
+.login-card h1 { margin-bottom: 14px; color: var(--accent); }
+.login-card .client-form { display: grid; gap: 14px; }
+.account-bar { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 10px; padding: 8px 160px 8px 24px; min-height: 50px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 12px; }
 
 body { background: var(--page); color: var(--ink); font-size: 13px; line-height: 1.5; }
 button, input, select { font-family: inherit; }

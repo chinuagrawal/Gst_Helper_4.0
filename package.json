@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test": "node tests/clientId.test.mjs && node tests/navigation.test.mjs && node tests/filingDashboard.test.mjs && node tests/filingStorage.test.mjs",
+    "test": "node tests/clientId.test.mjs && node tests/navigation.test.mjs && node tests/filingDashboard.test.mjs && node tests/filingStorage.test.mjs && node tests/cloudCodec.test.mjs",
     "test:repotic": "node tests/repotic.test.mjs",
     "dev": "vite",
     "build": "vite build",
@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "firebase": "^12.10.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "xlsx": "^0.18.5"

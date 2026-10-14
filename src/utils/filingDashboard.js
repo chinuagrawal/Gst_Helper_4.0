@@ -7,6 +7,7 @@ export function downloadFileName(client, fp) {
 }
 
 export function summarizeFiling(key, saved) {
+  if ('dashboard' in saved) return saved.dashboard;
   const [clientId, year, month] = JSON.parse(key);
   const uploaded = ['tcs_sales', 'tcs_sales_return', 'Tax_invoice_details']
     .filter(type => saved.rows?.[type]?.length > 0).length;
