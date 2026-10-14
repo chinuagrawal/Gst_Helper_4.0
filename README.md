@@ -1,23 +1,28 @@
-# GST Helper
+# GST Helper 4.0
 
-A client dashboard and GST JSON generator with monthly upload storage, keyboard navigation, and light/dark themes.
+The app now lives directly in this project root.
 
-## Run the app
+## Development
 
-Install dependencies with `npm --prefix gst-helper install`, then run `npm run dev` from this folder. Root commands delegate to the app:
+Run `npm ci`, then `npm run dev` from this folder.
 
 - `npm test` — local application tests.
 - `npm run lint` — source checks.
-- `npm run build` — production build.
-- `npm run test:repotic` — optional comparison against the original external September 2026 files.
+- `npm run build` — production build in `dist`.
+- `npm run preview` — preview the production build.
+- `npm run test:repotic` — optional comparison requiring the original external September 2026 dataset.
 
-## Project folders
+## Vercel
 
-- `gst-helper/src/` — application screens, styles, and calculation/storage utilities.
-- `gst-helper/public/` — the application favicon.
-- `gst-helper/tests/` — regression tests.
-- `gst-helper/docs/` — comparison workflow notes.
-- `samples/legacy/` — original project spreadsheets and reference JSON files, preserved unchanged.
-- `outputs/` — generated JSON files kept for reference.
+Use the repository root as the Root Directory. The included `vercel.json` selects Vite, installs with `npm ci`, builds with `npm run build`, and serves `dist`.
 
-The legacy samples are separate from the September comparison dataset. Client details and monthly uploads live in browser storage and are not affected by project-file cleanup.
+Hash navigation needs no server rewrites. Clients and uploads are saved in browser storage. Local browser data does not automatically transfer to a new deployment address.
+
+## Folders
+
+- `src/` — app code and styles.
+- `public/` — favicon.
+- `tests/` — regression tests.
+- `docs/` — workflow notes.
+- `samples/legacy/` — original sample inputs.
+- `outputs/` — retained generated JSON examples.

@@ -8,7 +8,7 @@ import { compareToReference, canDownloadOutput } from '../src/utils/compare.js';
 import { getPOS, r2 } from '../src/utils/constants.js';
 
 const inputDir = process.env.REPOTIC_INPUT_DIR || 'D:/temp new';
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const load = async (name) => {
   const buffer = await fs.readFile(path.join(inputDir, `${name}.xlsx`));
   const rows = await parseExcelFile({ arrayBuffer: async () =>

@@ -1,12 +1,27 @@
 {
-  "name": "gst-helper-workspace",
-  "version": "1.0.0",
+  "name": "gst-helper",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "npm --prefix gst-helper run dev",
-    "build": "npm --prefix gst-helper run build",
-    "lint": "npm --prefix gst-helper run lint",
-    "test": "npm --prefix gst-helper test",
-    "test:repotic": "npm --prefix gst-helper run test:repotic"
+    "test": "node tests/clientId.test.mjs && node tests/navigation.test.mjs && node tests/filingDashboard.test.mjs && node tests/filingStorage.test.mjs",
+    "test:repotic": "node tests/repotic.test.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "fake-indexeddb": "^6.2.5",
+    "oxlint": "^1.79.0",
+    "vite": "^8.2.2"
   }
 }
