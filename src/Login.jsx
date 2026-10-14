@@ -1,19 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from './utils/firebase.js';
-
-function message(error) {
-  const messages = {
-    'auth/invalid-verification-code': 'Incorrect OTP. Check the six-digit code and try again.',
-    'auth/code-expired': 'The OTP expired. Send a new code.',
-    'auth/too-many-requests': 'Too many attempts. Wait before requesting another OTP.',
-    'auth/unauthorized-domain': 'This website domain needs to be authorized in Firebase Authentication.',
-    'auth/operation-not-allowed': 'Enable Phone sign-in in Firebase Authentication.',
-    'auth/quota-exceeded': 'The project SMS quota has been exceeded.',
-    'auth/invalid-phone-number': 'Enter a valid phone number with its country code.',
-  };
-  return messages[error.code] || `Login failed (${error.code || 'network error'}). Please try again.`;
-}
+import { authErrorMessage as message } from './utils/authErrors.js';
 
 export default function Login() {
   const [phone, setPhone] = useState('+91');
@@ -33,7 +21,7 @@ export default function Login() {
     setBusy(true); setError('');
     try {
       verifier.current?.clear();
-      verifier.current = new RecaptchaVerifier(auth, 'otp-recaptcha', { size: 'normal' });
+      verifier.current = new RecaptchaVerifier(auth, 'otp-recaptcha', { size: 'invisible' });
       await verifier.current.render();
       setConfirmation(await signInWithPhoneNumber(auth, number, verifier.current));
       setRetryAt(Date.now() + 60000); setCode('');
