@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, onSnapshot, writeBatch } from 'firebase/firestore';
 import { auth, db, firebaseConfigured, requireUser, firebaseProjectId, firestoreDatabaseId } from './utils/firebase.js';
-import { checkFirestore } from './utils/checkFirestore.js';
 import { flushFilingWrites } from './utils/filingStorage.js';
 import Login from './Login.jsx';
 import { importLegacyData } from './utils/importLegacy.js';
@@ -33,22 +32,19 @@ export default function FirebaseGate({ children }) {
     if (!user) return;
     let cancelled = false;
     let unsubscribe = () => {};
-    const controller = new AbortController();
-    const timer = setTimeout(() => { setSlow(true); controller.abort(); }, 10000);
+    const timer = setTimeout(() => setSlow(true), 10000);
     const fail = err => {
       if (cancelled) return;
       clearTimeout(timer);
       setError(err.code === 'not-found'
         ? `Firestore database "${firestoreDatabaseId}" was not found in project "${firebaseProjectId}". Create that database or configure the correct database ID.`
         : err.code === 'permission-denied'
-          ? 'Firestore access was denied. Check the database Security rules and Cloud Firestore API, then retry.'
+          ? `Firebase SDK access was denied for database "${firestoreDatabaseId}". Check App Check enforcement and the published database rules. Sign out and sign in again to refresh your session.`
           : `Cannot connect to Firestore${err.name === 'AbortError' ? ' within 10 seconds' : ` (${err.code || 'network error'})`}. Check your connection and retry.`);
     };
     async function connect() {
       try {
-        const token = await user.getIdToken();
-        if (cancelled) return;
-        await checkFirestore({ projectId: firebaseProjectId, databaseId: firestoreDatabaseId, uid: user.uid, token, signal: controller.signal });
+        await user.getIdToken(true);
         if (cancelled) return;
         unsubscribe = onSnapshot(collection(db, 'users', user.uid, 'clients'), { includeMetadataChanges: true }, snapshot => {
       // A populated cache can open immediately; an empty cache is not proof of an empty account.
@@ -60,7 +56,7 @@ export default function FirebaseGate({ children }) {
       } catch (err) { fail(err); }
     }
     connect();
-    return () => { cancelled = true; clearTimeout(timer); controller.abort(); unsubscribe(); };
+    return () => { cancelled = true; clearTimeout(timer); unsubscribe(); };
   }, [user, retry]);
   async function saveClients(next) {
     const uid = requireUser(user.uid);
