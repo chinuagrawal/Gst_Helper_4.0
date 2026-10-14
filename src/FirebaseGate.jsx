@@ -8,6 +8,7 @@ import { importLegacyData } from './utils/importLegacy.js';
 import { Account } from './accountContext.js';
 import ThemeToggle from './ThemeToggle.jsx';
 import WorkspaceLoading from './WorkspaceLoading.jsx';
+import Landing from './Landing.jsx';
 
 export default function FirebaseGate({ children }) {
   const [user, setUser] = useState(null);
@@ -19,12 +20,26 @@ export default function FirebaseGate({ children }) {
   const [importStatus, setImportStatus] = useState('');
   const [slow, setSlow] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [showLogin, setShowLogin] = useState(() => window.location.hash === '#/login');
+  useEffect(() => {
+    const sync = () => setShowLogin(window.location.hash === '#/login');
+    window.addEventListener('popstate', sync);
+    window.addEventListener('hashchange', sync);
+    return () => { window.removeEventListener('popstate', sync); window.removeEventListener('hashchange', sync); };
+  }, []);
+  const openLogin = () => {
+    window.history.pushState(null, '', '#/login'); setShowLogin(true); window.scrollTo(0, 0);
+  };
+  const openLanding = () => {
+    window.history.pushState(null, '', '#/'); setShowLogin(false); window.scrollTo(0, 0);
+  };
   const [hasLegacy] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gst-helper-clients-v1') || '[]').length > 0; } catch { return false; }
   });
   useEffect(() => {
     if (!auth) return;
     return onAuthStateChanged(auth, next => {
+      if (next && window.location.hash === '#/login') window.history.replaceState(null, '', '#/dashboard');
       setUser(next); setChecking(false); setClients([]); setLoaded(false); setError(''); setImportStatus(''); setSlow(false);
     });
   }, []);
@@ -83,7 +98,7 @@ export default function FirebaseGate({ children }) {
   }
   if (!firebaseConfigured) return <main className="login-page"><section className="card login-card"><h1>Connect Firebase</h1><p>Add the Firebase web configuration to your environment variables to enable phone login and cloud storage.</p><p className="client-storage-note">Setup instructions: docs/firebase-setup.md. Existing browser data is preserved.</p></section></main>;
   if (checking) return <WorkspaceLoading session />;
-  if (!user) return <Login />;
+  if (!user) return showLogin ? <Login onBack={openLanding} /> : <Landing onLogin={openLogin} />;
   if (!loaded) return <><div className="account-bar"><ThemeToggle /></div><WorkspaceLoading error={error} slow={slow}
     onRetry={() => { setError(''); setSlow(false); setRetry(value => value + 1); }} onLogout={logout} busy={busy} /></>;
   return <Account.Provider value={{ user, clients, saveClients }}>
