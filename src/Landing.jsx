@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './landing.css';
 
 function Icon({ type = 'check' }) {
@@ -8,7 +8,10 @@ function Icon({ type = 'check' }) {
 
 export default function Landing({ onLogin }) {
   const root = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
+    if (!('IntersectionObserver' in window)) return;
+    root.current.classList.add('lp-reveal-enabled');
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
     }), { threshold: .08 });
@@ -16,18 +19,20 @@ export default function Landing({ onLogin }) {
     return () => observer.disconnect();
   }, []);
   return <div className="landing" ref={root}>
+    <a className="lp-skip" href="#landing-main">Skip to content</a>
     <nav className="lp-nav" aria-label="Main navigation">
       <a href="#/" className="lp-brand"><span>g.</span>GST Helper</a>
-      <div className="lp-nav-links"><a href="#how-it-works">How it works</a><a href="#integrations">Integrations</a><a href="#features">Features</a></div>
+      <div className={`lp-nav-links ${menuOpen ? 'lp-menu-open' : ''}`} id="landing-nav"><a href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a><a href="#integrations" onClick={() => setMenuOpen(false)}>Marketplaces</a><a href="#features" onClick={() => setMenuOpen(false)}>Features</a><a href="#questions" onClick={() => setMenuOpen(false)}>FAQs</a></div>
+      <button className="lp-menu-toggle" aria-controls="landing-nav" aria-expanded={menuOpen} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setMenuOpen(value => !value)} onKeyDown={event => { if (event.key === 'Escape') setMenuOpen(false); }}>{menuOpen ? 'Close ×' : 'Menu ☰'}</button>
       <button className="lp-button lp-button-dark" onClick={onLogin}>Sign in <Icon type="arrow" /></button>
     </nav>
-    <main>
+    <main id="landing-main" tabIndex={-1}>
       <section className="lp-hero">
         <div className="lp-hero-copy">
-          <div className="lp-eyebrow"><span className="lp-live-dot" /> MEESHO IS LIVE <span className="lp-badge-divider">/</span> YOUR NEXT MONTH, SIMPLIFIED</div>
-          <h1>GST filing.<br /><span>Minus the busywork.</span></h1>
-          <p className="lp-hero-description">From a folder full of Meesho reports to a filing-ready workflow. Organize your clients, review your numbers, and generate GSTR-1 JSON in one place.</p>
-          <div className="lp-hero-actions"><button className="lp-button lp-button-dark lp-button-large" onClick={onLogin}>Get started <Icon type="arrow" /></button><a href="#how-it-works" className="lp-text-link">See how it works <span>↗</span></a></div>
+          <div className="lp-eyebrow"><span className="lp-live-dot" /> THE WORKSPACE FOR YOUR NEXT RETURN</div>
+          <h1>Your reports.<br />Your return.<br /><span>A little less work.</span></h1>
+          <p className="lp-hero-description">GST filing made easy. Bring your Meesho reports together, keep every client’s month organized, and prepare GSTR-1 JSON with a clearer view of your numbers.</p>
+          <div className="lp-hero-actions"><button className="lp-button lp-button-dark lp-button-large" onClick={onLogin}>Start with Meesho <Icon type="arrow" /></button><a href="#how-it-works" className="lp-text-link">Explore the workflow <span>↗</span></a></div>
           <div className="lp-hero-notes"><span><Icon /> Phone OTP sign-in</span><span><Icon /> Your workspace, saved</span></div>
         </div>
         <div className="lp-visual" aria-label="Illustrative preview of the GST Helper workflow">
@@ -46,7 +51,7 @@ export default function Landing({ onLogin }) {
         </div>
       </section>
       <section className="lp-integrations" id="integrations" data-reveal>
-        <div><span className="lp-section-kicker">STARTING WITH MEESHO</span><h2>One workflow.<br />More marketplaces ahead.</h2></div>
+        <div><span className="lp-section-kicker">STARTING WITH MEESHO</span><h2>One workflow. <br />More marketplaces ahead.</h2></div>
         <div className="lp-marketplaces">
           <div className="lp-marketplace lp-marketplace-live"><div className="lp-marketplace-logo"><img src="/logos/meesho.png" alt="" width="52" height="52" loading="lazy" /></div><strong className="lp-meesho">Meesho</strong><span><i /> Available now</span></div>
           <div className="lp-marketplace"><div className="lp-marketplace-logo lp-marketplace-logo-amazon"><img src="/logos/amazon.svg" alt="" width="76" height="32" loading="lazy" /></div><strong>Amazon</strong><span>Coming soon</span></div>
@@ -71,7 +76,13 @@ export default function Landing({ onLogin }) {
           ['arrow', 'Made for your keyboard', 'Arrow-key navigation and shortcuts for a faster daily workflow.'],
         ].map(([icon, title, copy]) => <article key={title}><span className="lp-feature-icon"><Icon type={icon} /></span><h3>{title}</h3><p>{copy}</p></article>)}</div>
       </section>
-      <section className="lp-bottom-cta" data-reveal><span className="lp-cta-spark" aria-hidden="true">✳</span><div><span className="lp-section-kicker">YOUR NEXT MONTH, SIMPLIFIED</span><h2>GST filing made easy.<br />Start with Meesho today.</h2><p>Your reports. Your clients. One organized workspace.</p></div><button className="lp-button lp-button-dark lp-button-large" onClick={onLogin}>Let’s get started <Icon type="arrow" /></button></section>
+      <section className="lp-faq" id="questions"><div><span className="lp-section-kicker">A FEW THINGS TO KNOW</span><h2>Clear before <br /><em>you begin.</em></h2></div><div className="lp-faq-list">{[
+        ['Which marketplaces are supported?', 'Meesho is available now. Amazon, Flipkart, and other marketplace integrations are coming soon.'],
+        ['What do I need to upload?', 'Choose your client and filing month, then upload the Meesho sales, sales return, and tax invoice details Excel reports.'],
+        ['Does GST Helper file my return for me?', 'GST Helper prepares GSTR-1 JSON and summaries for review. Check your generated data before uploading it to the GST portal.'],
+        ['Can I come back to my work later?', 'Yes. Your client records, monthly uploads, and generated output are saved in your signed-in cloud workspace.'],
+      ].map(([question, answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></section>
+      <section className="lp-bottom-cta" data-reveal><span className="lp-cta-spark" aria-hidden="true">✳</span><div><span className="lp-section-kicker">MAKE ROOM FOR A CLEARER MONTH</span><h2>Less spreadsheet juggling.<br /><em>More forward motion.</em></h2><p>Your reports. Your clients. One organized workspace.</p></div><button className="lp-button lp-button-dark lp-button-large" onClick={onLogin}>Open your workspace <Icon type="arrow" /></button></section>
     </main>
     <footer className="lp-footer"><a href="#/" className="lp-brand"><span>g.</span>GST Helper</a><p>Filing preparation, with less friction.</p><small>Meesho available now. Other integrations coming soon.<br />Review generated data before uploading it to the GST portal.</small></footer>
   </div>;
