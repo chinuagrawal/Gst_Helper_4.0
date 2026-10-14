@@ -10,6 +10,7 @@ import "./App.css";
 import "./theme.css";
 import useTableKeyboard from "./useTableKeyboard.js";
 import ShortcutHelp from "./ShortcutHelp.jsx";
+import NavigationBar from "./NavigationBar.jsx";
 import FirebaseGate from "./FirebaseGate.jsx";
 import { useAccount } from "./accountContext.js";
 import { readRoute, routeHash } from "./utils/navigation.js";
@@ -36,7 +37,7 @@ function getCurrentYear() {
   return new Date().getFullYear();
 }
 
-function Generator({ client, onBack, month, year, onPeriodChange }) {
+function Generator({ client, onBack, month, year, onPeriodChange, canGoBack }) {
   const [files, setFiles] = useState({
     tcs_sales: null,
     tcs_sales_return: null,
@@ -311,8 +312,8 @@ function Generator({ client, onBack, month, year, onPeriodChange }) {
       </header>
 
       <main className="container" data-keyboard-screen="generator">
+        <NavigationBar onBack={onBack} canGoBack={canGoBack} disabled={loading || saveStatus === 'Saving…'} />
         <section className="card client-context">
-          <button className="btn btn-secondary" disabled={loading || saveStatus === 'Saving…'} onClick={onBack}>← All clients</button>
           <div>
             <h2>{client.tradeName}</h2>
             <p>{client.partyName} · {client.gstin} · {client.returnFrequency} return</p>
@@ -995,7 +996,7 @@ function Workspace() {
       event.preventDefault();
       window.history.back();
     };
-    if (!window.location.hash) window.history.replaceState(null, '', routeHash({ screen: 'dashboard' }));
+    window.history.replaceState({ ...window.history.state, gstHelperDepth: window.history.state?.gstHelperDepth || 0 }, '', window.location.hash || routeHash({ screen: 'dashboard' }));
     window.addEventListener('popstate', syncRoute);
     window.addEventListener('hashchange', syncRoute);
     window.addEventListener('keydown', keyboardBack);
@@ -1007,8 +1008,12 @@ function Workspace() {
   }, []);
   const navigate = next => {
     const hash = routeHash(next);
-    if (window.location.hash !== hash) window.history.pushState(null, '', hash);
+    if (window.location.hash !== hash) window.history.pushState({ gstHelperDepth: (window.history.state?.gstHelperDepth || 0) + 1 }, '', hash);
     setRoute(next);
+  };
+  const goBack = () => {
+    if (window.history.state?.gstHelperDepth > 0) window.history.back();
+    else navigate({ screen: route.screen === 'filing' ? 'clients' : 'dashboard' });
   };
   let selectedClient = null;
   if (route.screen === 'filing') {
@@ -1033,8 +1038,9 @@ function Workspace() {
   };
   return <><ShortcutHelp onNavigate={navigate} />{selectedClient
     ? <Generator key={filingKey(selectedClient.id, period.month, period.year)} client={selectedClient}
-        month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={() => navigate({ screen: 'clients' })} />
-    : <ClientHome key={routeHash(route)} newClient={route.newClient} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient} />}</>;
+        month={period.month} year={period.year} onPeriodChange={changePeriod} onBack={goBack} canGoBack={window.history.state?.gstHelperDepth > 0} />
+    : <ClientHome key={routeHash(route)} newClient={route.newClient} view={route.screen === 'dashboard' ? 'dashboard' : 'clients'} onNavigate={navigate} onOpen={openClient}
+        onBack={goBack} canGoBack={window.history.state?.gstHelperDepth > 0} />}</>;
 }
 
 export default function App() {

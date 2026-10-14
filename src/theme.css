@@ -25,6 +25,7 @@ button, input, select { font-family: inherit; }
 .card h2, .client-toolbar h2 { color: var(--ink); font-size: 15px; letter-spacing: -.2px; margin-bottom: 12px; }
 .client-toolbar h2, .client-context h2 { margin-bottom: 0; }
 .client-toolbar { gap: 12px; }
+.client-toolbar-actions { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .client-context { padding: 14px 18px; }
 .client-context p, .client-storage-note, .ref-status, .period-title, .sum-sub { color: var(--muted); font-size: 12px; }
 .client-storage-note { margin: 10px 0 14px; }
@@ -129,6 +130,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .theme-toggle { position: absolute; z-index: 10; top: 22px; right: max(24px, calc((100vw - 1280px) / 2 + 24px)); display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); font-size: 12px; cursor: pointer; }
 .theme-toggle span { font-size: 17px; line-height: 1; }
+.screen-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.navigation-divider { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
 .account-bar { padding: 8px 24px; }
 .account-bar .theme-toggle { position: static; flex-shrink: 0; min-height: 34px; }
 .workspace-loading { min-height: calc(100vh - 50px); }

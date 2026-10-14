@@ -3,12 +3,13 @@ import { createClientId } from './utils/clientId.js';
 import { listFilings } from './utils/filingStorage.js';
 import { summarizeFiling } from './utils/filingDashboard.js';
 import Dashboard from './Dashboard.jsx';
+import NavigationBar from './NavigationBar.jsx';
 import { useAccount } from './accountContext.js';
 
 const emptyClient = { tradeName: '', partyName: '', gstin: '', returnFrequency: 'Quarterly', active: true };
 
 
-export default function ClientHome({ onOpen, view = 'dashboard', onNavigate, newClient = false }) {
+export default function ClientHome({ onOpen, view = 'dashboard', onNavigate, newClient = false, onBack, canGoBack }) {
   const { clients, saveClients } = useAccount();
   const initial = { error: '' };
   const [error, setError] = useState('');
@@ -90,6 +91,7 @@ export default function ClientHome({ onOpen, view = 'dashboard', onNavigate, new
     `${client.tradeName} ${client.partyName} ${client.gstin}`.toLowerCase().includes(query.toLowerCase()));
 
   if (view === 'dashboard') return <Dashboard clients={clients} filings={filings} filingStatus={filingStatus}
+    onBack={onBack} canGoBack={canGoBack}
     error={error} onClients={() => onNavigate({ screen: 'clients' })} onOpen={onOpen}
     onToggle={client => persist(clients.map(item => item.id === client.id
       ? { ...item, active: item.active === false } : item))} />;
@@ -101,13 +103,17 @@ export default function ClientHome({ onOpen, view = 'dashboard', onNavigate, new
         <p className="subtitle">Choose a client to upload files and generate their return.</p>
       </header>
       <main className="container">
+        <NavigationBar disabled={saving} canGoBack={canGoBack || Boolean(draft) || Boolean(deleteId)}
+          onBack={() => { if (draft) { setDraft(null); setError(''); } else if (deleteId) setDeleteId(null); else onBack(); }} />
         <section className="card">
           <div className="client-toolbar">
             <h2>Your clients ({clients.length})</h2>
-            <button className="btn btn-secondary" onClick={() => onNavigate({ screen: 'dashboard' })}>Dashboard</button>
+            <div className="client-toolbar-actions">
             <button className="btn btn-primary" onClick={() => {
               setDraft({ ...emptyClient }); setDeleteId(null); setError(initial.error);
             }}>+ Add client</button>
+            <button className="btn btn-secondary" onClick={() => onNavigate({ screen: 'dashboard' })}>Dashboard</button>
+            </div>
           </div>
           <p className="client-storage-note">Client details are saved privately in your Firebase account.</p>
           {filingStatus && <p className="client-storage-note" role="status">{filingStatus}</p>}

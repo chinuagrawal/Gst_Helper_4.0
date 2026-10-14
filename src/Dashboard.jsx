@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { monthlyWork } from './utils/filingDashboard.js';
+import NavigationBar from './NavigationBar.jsx';
 
-export default function Dashboard({ clients, filings, filingStatus, error, onToggle, onOpen, onClients }) {
+export default function Dashboard({ clients, filings, filingStatus, error, onToggle, onOpen, onClients, onBack, canGoBack }) {
   const [defaultPeriod] = useState(() => {
     const today = new Date();
     const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -20,6 +21,7 @@ export default function Dashboard({ clients, filings, filingStatus, error, onTog
   return <div className="app">
     <header className="app-header"><h1>GST Helper · Dashboard</h1><p className="subtitle">Track client activity and monthly work.</p></header>
     <main className="container" data-keyboard-screen="dashboard">
+      <NavigationBar onBack={onBack} canGoBack={canGoBack} />
       <div className="client-toolbar">
         <h2>Dashboard</h2><button className="btn btn-secondary" onClick={onClients}>Manage clients</button>
       </div>
