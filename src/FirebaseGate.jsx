@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, onSnapshot, writeBatch } from 'firebase/firestore';
-import { auth, db, firebaseConfigured, requireUser } from './utils/firebase.js';
+import { auth, db, firebaseConfigured, requireUser, firebaseProjectId, firestoreDatabaseId } from './utils/firebase.js';
+import { checkFirestore } from './utils/checkFirestore.js';
 import { flushFilingWrites } from './utils/filingStorage.js';
 import Login from './Login.jsx';
 import { importLegacyData } from './utils/importLegacy.js';
@@ -30,20 +31,36 @@ export default function FirebaseGate({ children }) {
   }, []);
   useEffect(() => {
     if (!user) return;
-    const timer = setTimeout(() => setSlow(true), 10000);
-    const unsubscribe = onSnapshot(collection(db, 'users', user.uid, 'clients'), { includeMetadataChanges: true }, snapshot => {
+    let cancelled = false;
+    let unsubscribe = () => {};
+    const controller = new AbortController();
+    const timer = setTimeout(() => { setSlow(true); controller.abort(); }, 10000);
+    const fail = err => {
+      if (cancelled) return;
+      clearTimeout(timer);
+      setError(err.code === 'not-found'
+        ? `Firestore database "${firestoreDatabaseId}" was not found in project "${firebaseProjectId}". Create that database or configure the correct database ID.`
+        : err.code === 'permission-denied'
+          ? 'Firestore access was denied. Check the database Security rules and Cloud Firestore API, then retry.'
+          : `Cannot connect to Firestore${err.name === 'AbortError' ? ' within 10 seconds' : ` (${err.code || 'network error'})`}. Check your connection and retry.`);
+    };
+    async function connect() {
+      try {
+        const token = await user.getIdToken();
+        if (cancelled) return;
+        await checkFirestore({ projectId: firebaseProjectId, databaseId: firestoreDatabaseId, uid: user.uid, token, signal: controller.signal });
+        if (cancelled) return;
+        unsubscribe = onSnapshot(collection(db, 'users', user.uid, 'clients'), { includeMetadataChanges: true }, snapshot => {
       // A populated cache can open immediately; an empty cache is not proof of an empty account.
       if (snapshot.metadata.fromCache && snapshot.empty) return;
       clearTimeout(timer);
       setClients(snapshot.docs.map(item => ({ ...item.data(), id: item.id }))); setLoaded(true);
       setSlow(false); setError('');
-    }, err => {
-      clearTimeout(timer);
-      setError(err.code === 'permission-denied'
-        ? 'Firestore access was denied. Publish the project’s firestore.rules for your signed-in account, then retry.'
-        : `Cannot connect to your cloud workspace (${err.code}). Check your connection and retry.`);
-    });
-    return () => { clearTimeout(timer); unsubscribe(); };
+        }, fail);
+      } catch (err) { fail(err); }
+    }
+    connect();
+    return () => { cancelled = true; clearTimeout(timer); controller.abort(); unsubscribe(); };
   }, [user, retry]);
   async function saveClients(next) {
     const uid = requireUser(user.uid);

@@ -19,6 +19,8 @@ For development, use Firebase's configured test phone numbers and fixed test cod
 
 ## Storage behavior
 
+If startup reports `Database '(default)' not found`, check the database ID in the Firebase console. `(default)` and a named database such as `default` are different IDs. The app defaults to `(default)`; set `VITE_FIREBASE_DATABASE_ID` to the exact existing ID in Vercel and redeploy if you use a named database. Publish the rules on that same database. CLI rule deployment in `firebase.json` currently targets the default database.
+
 Clients are stored in `users/{uid}/clients`. Monthly dashboard metadata lives in `users/{uid}/filings`. Original Excel files and JSON snapshots are in Storage under `users/{uid}/filings`. Both rule sets restrict each account to its own UID. The app saves to cloud and shows failures instead of pretending a failed cloud save succeeded. Original uploaded files and historical snapshots are retained; storage cleanup is not automatic.
 
 The optional import copies old browser records into the current account, skips existing cloud records, and never deletes local data. Sign out waits for queued filing writes. The account is isolated by phone login; this implementation does not add an administrator allowlist, so any phone account allowed by your Firebase project can create its own private workspace.

@@ -16,9 +16,11 @@ const config = {
 export const firebaseConfigured = typeof window !== 'undefined' && Object.values(config).every(Boolean);
 const app = firebaseConfigured ? initializeApp(config) : null;
 export const auth = app ? getAuth(app) : null;
+export const firestoreDatabaseId = env.VITE_FIREBASE_DATABASE_ID || webConfig.databaseId || '(default)';
+export const firebaseProjectId = config.projectId;
 export const db = app ? initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-}) : null;
+}, firestoreDatabaseId) : null;
 export const storage = app ? getStorage(app) : null;
 export function requireUser(expectedUid) {
   const uid = auth?.currentUser?.uid;

@@ -2,6 +2,7 @@
   "apiKey": "AIzaSyAf4XIcshnSqlPYFf_OxaHzLHC1g8cZkng",
   "authDomain": "gstfiling-66d45.firebaseapp.com",
   "projectId": "gstfiling-66d45",
+  "databaseId": "default",
   "storageBucket": "gstfiling-66d45.firebasestorage.app",
   "messagingSenderId": "145745894809",
   "appId": "1:145745894809:web:0ee2737dc4993b96c08708"
